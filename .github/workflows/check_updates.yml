@@ -32,4 +32,4 @@ jobs:
           git commit -am "Update version"
           git push --set-upstream origin "$PR_BRANCH"
       - name: create pull request
-        run: gh pr create -B main -H "$PR_BRANCH" --title "Update version" --body "Update version"
+        run: gh pr create -H "$PR_BRANCH" --title "Update version" --body "Update version"
