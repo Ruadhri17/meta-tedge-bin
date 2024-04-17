@@ -3,7 +3,7 @@ LICENSE = "CLOSED"
 SRC_URI += " \
     file://rauc_workflow.sh \ 
     file://firmware_update.rauc.toml \
-    file://tedge-firmware \
+    file://tedge-firmware-rauc \
     file://persist.conf \
 "
 
@@ -21,8 +21,8 @@ do_install () {
 
     # FIXME: This cases a conflict with the existing sudoers.d folder
     # Allow sudo access
-    #install -d -m 0700 "${D}/etc/sudoers.d"
-    #install -m 0644 "${WORKDIR}/tedge-firmware" "${D}${sysconfdir}/sudoers.d/"
+    install -d -m 0750 "${D}/etc/sudoers.d"
+    install -m 0644 "${WORKDIR}/tedge-firmware-rauc" "${D}${sysconfdir}/sudoers.d/"
 
     # mosquitto setup
     install -d "${D}/var/lib/mosquitto"
@@ -34,6 +34,6 @@ FILES:${PN} += " \
     ${bindir}/rauc_workflow.sh \
     ${sysconfdir}/tedge/operations/firmware_update.toml \
     ${datadir}/tedge-workflows/firmware_update.rauc.toml \
-    ${sysconfdir}/sudoers.d/tedge-firmware \
+    ${sysconfdir}/sudoers.d/tedge-firmware-rauc \
     ${sysconfdir}/tedge/mosquitto-conf/persist.conf \
 "
