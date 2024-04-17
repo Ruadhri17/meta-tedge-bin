@@ -1,6 +1,9 @@
 
 DESCRIPTION = "RAUC bundle generator"
 
+LICENSE = "Apache-2.0"
+LIC_FILES_CHKSUM = "file://${COMMON_LICENSE_DIR}/Apache-2.0;md5=89aea4e17d99a7cacdbeed46a0096b10" 
+
 inherit bundle
 
 RAUC_BUNDLE_COMPATIBLE = "${MACHINE}"
@@ -20,5 +23,4 @@ RAUC_CERT_FILE ?= "${THISDIR}/files/development-1.cert.pem"
 # see: https://github.com/rauc/meta-rauc/issues/185
 SRC_URI += " file://hook.sh"
 RAUC_BUNDLE_HOOKS[file] = "hook.sh"
-RAUC_BUNDLE_HOOKS[hooks] = "post-install"
-#RAUC_SLOT_rootfs[hooks] = "post-install"
+RAUC_SLOT_rootfs[hooks] = "post-install"
