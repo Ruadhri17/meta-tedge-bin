@@ -15,3 +15,10 @@ RAUC_SLOT_rootfs[fstype] = "ext4"
 
 RAUC_KEY_FILE ?= "${THISDIR}/files/development-1.key.pem"
 RAUC_CERT_FILE ?= "${THISDIR}/files/development-1.cert.pem"
+
+# Hooks
+# see: https://github.com/rauc/meta-rauc/issues/185
+SRC_URI += " file://hook.sh"
+RAUC_BUNDLE_HOOKS[file] = "hook.sh"
+RAUC_BUNDLE_HOOKS[hooks] = "post-install"
+#RAUC_SLOT_rootfs[hooks] = "post-install"
