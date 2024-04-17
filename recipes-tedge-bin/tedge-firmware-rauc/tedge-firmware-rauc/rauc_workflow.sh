@@ -4,7 +4,7 @@ FIRMWARE_NAME=
 FIRMWARE_VERSION=
 FIRMWARE_URL=
 FIRMWARE_META_FILE=/etc/tedge/.firmware
-MANUAL_DOWNLOAD=1
+MANUAL_DOWNLOAD=0
 
 # Exit codes
 OK=0
@@ -71,7 +71,7 @@ done
 
 wait_for_network() {
     #
-    # Wait for network to be ready but don't block if still not available as the mender commit
+    # Wait for network to be ready but don't block if still not available as the rauc commit
     # might be used to restore network connectivity.
     #
     attempt=0
@@ -107,16 +107,13 @@ wait_for_network() {
     return 1
 }
 
+load_rauc_variables() {
+    eval "$(rauc status --output-format shell)"
+}
+
 get_current_partition() {
-    MENDER_ROOTFS_PART_A="/dev/mmcblk0p2"
-    #MENDER_ROOTFS_PART_B="/dev/mmcblk0p3"
-    current=""
-    if mount | grep "${MENDER_ROOTFS_PART_A} on / " >/dev/null; then
-        current="A"
-    else
-        current="B"
-    fi
-    echo "$current"
+    load_rauc_variables
+    echo "$RAUC_SYSTEM_BOOTED_BOOTNAME"
 }
 
 get_next_partition() {
@@ -129,27 +126,16 @@ executing() {
     echo "---------------------------------------------------------------------------"
     echo "Firmware update: $current_partition -> $next_partition"
     echo "---------------------------------------------------------------------------"
-    log "Starting firmware update. Current partition is $(get_current_partition), so update will be applied to $next_partition"
+    log "Starting firmware update. Current partition is $current_partition, so update will be applied to $next_partition"
 }
 
 download() {
     url="$1"
-
-    MANUAL_DOWNLOAD=0
-
     tedge_url="$url"
 
     # Auto detect based on the url if the direct url can be used or not
     case "$url" in
         */inventory/binaries/*)
-            # FUTURE: The mender client 3.x currently checks for a Content-Length header in the response
-            # and fails if it is not present. Cumulocity IoT uses chunked Transfter-Encoding where the Content-Length
-            # is no included in the response headers, thus causing mender to fail.
-            # mender is currently being rewritten and seems to have support for proper Content-Range handling, however
-            # it is still in alpha.
-            #
-            MANUAL_DOWNLOAD=1
-
             #
             # Change url to a local url using the c8y proxy
             #
@@ -185,11 +171,20 @@ install() {
     log "Executing: rauc install '$url'"
     EXIT_CODE="$OK"
 
+    # Get bundle info
+    BUNDLE_INFO=$(rauc info "$url" --output-format=shell 2>/dev/null)
+    IS_ROOT_FS_IMAGE=$(echo "$BUNDLE_INFO" | grep "RAUC_IMAGE_CLASS_[0-9]='rootfs'")
+
     $SUDO rauc install "$url" || EXIT_CODE="$?"
 
     case "$EXIT_CODE" in
         0)
-            log "OK, RESTART required"
+            if [ -n "$IS_ROOT_FS_IMAGE" ]; then
+                log "OK, RESTART required"
+                EXIT_CODE=4
+            else
+                log "OK, no RESTART required"
+            fi
             ;;
         *)
             log "ERROR. Unexpected return code"
@@ -198,10 +193,39 @@ install() {
     exit "$EXIT_CODE"
 }
 
+verify() {
+    log "Verifying: TODO: Assume ok"
+    exit "$OK"
+}
+
+_is_update_pending() {
+    load_rauc_variables
+
+    # An update is pending if the booted name does not match the primary slot
+    case "$RAUC_SYSTEM_BOOTED_BOOTNAME" in
+        A)
+            if [ "$RAUC_BOOT_PRIMARY" = "rootfs.0" ]; then
+                return 1
+            fi
+            ;;
+        B)
+            if [ "$RAUC_BOOT_PRIMARY" = "rootfs.1" ]; then
+                return 1
+            fi
+            ;;
+    esac
+    return 0
+}
+
 commit() {
     log "Executing: rauc status mark-good"
     EXIT_CODE="$OK"
-    $SUDO rauc status mark-good || EXIT_CODE="$?"
+
+    if ! _is_update_pending; then
+        EXIT_CODE=2
+    else
+        $SUDO rauc status mark-good || EXIT_CODE="$?"
+    fi
 
     case "$EXIT_CODE" in
         0)
@@ -216,18 +240,25 @@ commit() {
             set_reason "Nothing to commit (update is not in progress)"
             ;;
         *)
-            log "Mender returned code: $EXIT_CODE. Rolling back to previous partition"
-            set_reason "Mender returned code: $EXIT_CODE. Rolling back to previous partition"
+            log "rauc returned code: $EXIT_CODE. Rolling back to previous partition"
+            set_reason "rauc returned code: $EXIT_CODE. Rolling back to previous partition"
             ;;
     esac
     exit "$EXIT_CODE"
+}
+
+rollback() {
+    log "Executing: Rollback"
+    $SUDO rauc status mark-bad
 }
 
 case "$ACTION" in
     executing) executing; ;;
     download) download "$FIRMWARE_URL"; ;;
     install) install "$FIRMWARE_URL"; ;;
+    verify) verify; ;;
     commit) commit; ;;
+    rollback) rollback; ;;
     restarted)
 	    wait_for_network ||:
         log "Device has been restarted...continuing workflow. partition=$(get_current_partition)"
@@ -236,7 +267,7 @@ case "$ACTION" in
         log "Firmware update failed, but the rollback was successful. partition=$(get_current_partition)"
         ;;
     *)
-        log "Unknown command. This script only accecpts: download, install, commit, rollback, rollback_successful"
+        log "Unknown command. This script only accecpts: executing, download, install, verify, commit, rollback, rollback_successful"
         exit "$FAILED"
         ;;
 esac
