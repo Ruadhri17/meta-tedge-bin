@@ -15,12 +15,15 @@ RAUC_BUNDLE_FORMAT = "verity"
 RAUC_BUNDLE_SLOTS = "rootfs" 
 RAUC_SLOT_rootfs ?= "core-image-tedge-rauc"
 RAUC_SLOT_rootfs[fstype] = "ext4"
-
-RAUC_KEY_FILE ?= "${THISDIR}/files/development-1.key.pem"
-RAUC_CERT_FILE ?= "${THISDIR}/files/development-1.cert.pem"
+RAUC_SLOT_rootfs[adaptive] ?= "block-hash-index"
 
 # Hooks
 # see: https://github.com/rauc/meta-rauc/issues/185
 SRC_URI += " file://hook.sh"
 RAUC_BUNDLE_HOOKS[file] = "hook.sh"
 RAUC_SLOT_rootfs[hooks] = "post-install"
+
+
+RAUC_KEY_FILE ?= "${THISDIR}/files/development-1.key.pem"
+RAUC_CERT_FILE ?= "${THISDIR}/files/development-1.cert.pem"
+IMAGE_ROOTFS_ALIGNMENT = "4"
