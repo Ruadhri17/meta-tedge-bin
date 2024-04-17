@@ -42,7 +42,7 @@ on_success = "commit"
 on_error = "commit"
 
 [commit]
-script = "/usr/bin/rauc_workflow.sh ${.payload.status} --firmware-name ${.payload.name} --firmware-version ${.payload.version} --url ${.payload.remoteUrl}"
+script = "/usr/bin/rauc_workflow.sh ${.payload.status} --firmware-name ${.payload.name} --firmware-version ${.payload.version} --url ${.payload.remoteUrl} --expected-partition ${.payload.nextPartition}"
 on_exit.0 = { status = "successful" }
 on_exit.2 = { status = "failed", reason = "Nothing to commit. Either the boot loader triggered the rollback, the device was rebooted after switching to new partition, or someone did a manual commit or rollback!"}
 on_exit._ = { status = "rollback", reason = "Rauc commit failed. Rolling back to previous partition" }

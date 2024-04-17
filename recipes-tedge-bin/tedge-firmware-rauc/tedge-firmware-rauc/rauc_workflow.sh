@@ -5,6 +5,7 @@ FIRMWARE_VERSION=
 FIRMWARE_URL=
 FIRMWARE_META_FILE=/etc/tedge/.firmware
 MANUAL_DOWNLOAD=0
+EXPECTED_PARTITION=
 
 # Exit codes
 OK=0
@@ -63,6 +64,10 @@ while [ $# -gt 0 ]; do
             ;;
         --url)
             FIRMWARE_URL="$2"
+            shift
+            ;;
+        --expected-partition)
+            EXPECTED_PARTITION="$2"
             shift
             ;;
     esac
@@ -127,6 +132,9 @@ executing() {
     echo "Firmware update: $current_partition -> $next_partition"
     echo "---------------------------------------------------------------------------"
     log "Starting firmware update. Current partition is $current_partition, so update will be applied to $next_partition"
+
+    # Store the current and next partition so it can work out if a swap has occurred
+    update_state "$(printf '{"partition":"%s","nextPartition":"%s"}\n' "$current_partition" "$next_partition")"
 }
 
 download() {
@@ -198,38 +206,21 @@ verify() {
     exit "$OK"
 }
 
-_is_update_pending() {
-    load_rauc_variables
-
-    # An update is pending if the booted name does not match the primary slot
-    case "$RAUC_SYSTEM_BOOTED_BOOTNAME" in
-        A)
-            if [ "$RAUC_BOOT_PRIMARY" = "rootfs.0" ]; then
-                return 1
-            fi
-            ;;
-        B)
-            if [ "$RAUC_BOOT_PRIMARY" = "rootfs.1" ]; then
-                return 1
-            fi
-            ;;
-    esac
-    return 0
-}
-
 commit() {
     log "Executing: rauc status mark-good"
     EXIT_CODE="$OK"
 
-    if ! _is_update_pending; then
+    current_partition="$(get_current_partition)"
+
+    if [ "$current_partition" != "$EXPECTED_PARTITION" ]; then
         EXIT_CODE=2
     else
         $SUDO rauc status mark-good || EXIT_CODE="$?"
-    fi
+    fi    
 
     case "$EXIT_CODE" in
         0)
-            log "Commit successful. New default partition is $(get_current_partition)"
+            log "Commit successful. New default partition is $current_partition"
 
             # Save firmware meta information to file (for reading on startup during normal operation)
             local_log "Saving firmware info to $FIRMWARE_META_FILE"
@@ -237,6 +228,9 @@ commit() {
             ;;
         2)
             log "Nothing to commit (update is not in progress)"
+
+            # Still mark partition as good, otherwise it could end up having no good partitions
+            $SUDO rauc status mark-good ||:
             set_reason "Nothing to commit (update is not in progress)"
             ;;
         *)
