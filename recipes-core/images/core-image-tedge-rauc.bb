@@ -6,4 +6,4 @@ IMAGE_INSTALL:append = " \
 "
 
 # Add Network Manager
-IMAGE_INSTALL += "networkmanager networkmanager-bash-completion networkmanager-nmtui"
+IMAGE_INSTALL += "networkmanager networkmanager-bash-completion networkmanager-nmtui monit"
