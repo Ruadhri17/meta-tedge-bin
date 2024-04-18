@@ -9,15 +9,40 @@
 ##################################################
 set -e
 
-CURRENT_ARTIFACT=$(sudo mender show-artifact 2>/dev/null ||:)
+NAME=
+VERSION=
 
-if [ -z "$CURRENT_ARTIFACT" ]; then
-    echo "mender show-artifact did not return a value" >&2
-    exit 0
+read_from_mender() {
+    # Parse mender artifact to name and version
+    # Example format: core-image-tedge-mender-raspberrypi4-64_20231203.1232
+    CURRENT_ARTIFACT=$(sudo mender show-artifact 2>/dev/null ||:)
+
+    if [ -z "$CURRENT_ARTIFACT" ]; then
+        echo "mender show-artifact did not return a value" >&2
+        exit 0
+    fi
+
+    NAME=$(echo "$CURRENT_ARTIFACT" | rev | cut -d_ -f2- | rev)
+    VERSION=$(echo "$CURRENT_ARTIFACT" | rev | cut -d_ -f1 | rev)
+}
+
+read_from_yocto_build() {
+    NAME=$(grep "IMAGE_BASENAME = " /etc/build | cut -d = -f2- | xargs)
+    VERSION=$(grep "DATETIME = " /etc/build | cut -d = -f2- | xargs)
+    # Alternative version (from the full image name instead of the DATETIME)
+    #VERSION=$(grep "IMAGE_NAME = " /etc/build | cut -d = -f2- | rev | cut -d_ -f1 | rev | xargs)
+}
+
+if command -v mender >/dev/null 2>&1; then
+    read_from_mender
+elif [ -f /etc/build ]; then
+    read_from_yocto_build
 fi
 
-NAME=$(echo "$CURRENT_ARTIFACT" | rev | cut -d_ -f2- | rev)
-VERSION=$(echo "$CURRENT_ARTIFACT" | rev | cut -d_ -f1 | rev)
+if [ -z "$NAME" ] || [ -z "$VERSION" ]; then
+    echo "could not detect firmware name or version. NAME=\"$NAME\", VERSION=\"$VERSION\"" >&2
+    exit 0
+fi
 
 echo "name=\"$NAME\""
 echo "version=\"$VERSION\""
