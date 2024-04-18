@@ -211,7 +211,7 @@ install() {
 }
 
 verify() {
-    log "Verifying: TODO: Assume ok"
+    log "Checking new partition health"
 
     MAPPERS="c8y az aws"
 
