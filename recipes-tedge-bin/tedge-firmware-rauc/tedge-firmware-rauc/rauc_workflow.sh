@@ -254,7 +254,7 @@ verify() {
     # Remove once https://github.com/thin-edge/thin-edge.io/issues/2498 is resolved
     TOPIC_ROOT=$(tedge config get mqtt.topic_root)
     TOPIC_ID=$(tedge config get mqtt.device_topic_id)
-    tedge mqtt pub -q 1 -r "$TOPIC_ROOT/$TOPIC_ID/cmd/health/check" '{}'
+    tedge mqtt pub -q 1 "$TOPIC_ROOT/$TOPIC_ID/cmd/health/check" '{}'
 
     # FIXME: Trigger tedge-inventory scripts as the status updates
     # are lost when the mosquitto bridge is down
