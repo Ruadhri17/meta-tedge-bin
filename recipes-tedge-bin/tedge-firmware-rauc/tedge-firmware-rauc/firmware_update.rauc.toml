@@ -20,14 +20,9 @@ on_success = "install"
 
 [install]
 script = "/usr/bin/rauc_workflow.sh ${.payload.status} --url ${.payload.url}"
-on_exit.0 = { status = "commit" }
+on_exit.0 = { status = "verify" }
 on_exit.4 = { status = "restart", reason = "Install was successful, rebooting device into spare partition" }
 on_exit._ = { status = "failed", reason = "Verification failed, no rollback necessary" }
-
-[verify]
-script = "/usr/bin/rauc_workflow.sh ${.payload.status}"
-on_success = { status = "commit" }
-on_error = { status = "rollback", reason = "Verification failed, need to rollback" }
 
 [restart]
 action = "restart"
@@ -37,9 +32,14 @@ on_error = { status = "failed", reason = "Failed to restart device" }
 
 [restarted]
 script = "/usr/bin/rauc_workflow.sh ${.payload.status}"
-on_success = "commit"
+on_success = "verify"
 # Always go to the commit state as the commit will do the verification...otherwise the rollback could be skipped
-on_error = "commit"
+on_error = "verify"
+
+[verify]
+script = "/usr/bin/rauc_workflow.sh ${.payload.status}"
+on_success = { status = "commit" }
+on_error = { status = "rollback", reason = "Verification failed, need to rollback" }
 
 [commit]
 script = "/usr/bin/rauc_workflow.sh ${.payload.status} --firmware-name ${.payload.name} --firmware-version ${.payload.version} --url ${.payload.remoteUrl} --expected-partition ${.payload.nextPartition}"
