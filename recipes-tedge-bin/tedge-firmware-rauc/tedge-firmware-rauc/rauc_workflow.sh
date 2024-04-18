@@ -179,6 +179,9 @@ install() {
     log "Executing: rauc install '$url'"
     EXIT_CODE="$OK"
 
+    # TODO: Detect which network adapter is being used, don't assume eth0
+    bytes_start=$(grep eth0 /proc/net/dev | awk '{print $2}')
+
     # Get bundle info
     BUNDLE_INFO=$(rauc info "$url" --output-format=shell 2>/dev/null)
     IS_ROOT_FS_IMAGE=$(echo "$BUNDLE_INFO" | grep "RAUC_IMAGE_CLASS_[0-9]='rootfs'")
@@ -198,6 +201,12 @@ install() {
             log "ERROR. Unexpected return code"
             ;;
     esac
+
+    # record network adapter before install
+    bytes_after=$(grep eth0 /proc/net/dev | awk '{print $2}')
+    total_bytes_rx=$((bytes_after - bytes_start))
+    log "Total downloaded bytes (eth0): $total_bytes_rx"
+
     exit "$EXIT_CODE"
 }
 
