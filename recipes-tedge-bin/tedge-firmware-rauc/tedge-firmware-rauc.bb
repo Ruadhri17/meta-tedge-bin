@@ -28,11 +28,6 @@ do_install () {
     install -d "${D}/var/lib/mosquitto"
     install -d "${D}${sysconfdir}/tedge/mosquitto-conf/"
     install -m 0644 "${WORKDIR}/persist.conf" "${D}${sysconfdir}/tedge/mosquitto-conf/"
-
-    # write image name to file to allow identifying the initial image
-    build_version=$(echo "${IMAGE_NAME_SUFFIX}" | sed 's/^-//g')
-    echo "IMAGE_NAME=${IMAGE_NAME}" > "${D}${sysconfdir}/image_version"
-    echo "IMAGE_VERSION=${build_version}" >> "${D}${sysconfdir}/image_version"
 }
 
 FILES:${PN} += " \
