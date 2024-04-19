@@ -36,11 +36,6 @@ while [ "$attempt" -lt 30 ]; do
     sleep 5
 done
 
-# TODO: Uninstall the rauc-mark-good service rather than disabling it here
-# as it should not be part of the image
-systemctl disable rauc-mark-good.service ||:
-systemctl stop rauc-mark-good.service ||:
-
 set_hostname "$DEVICE_ID"
 
 touch "$RAN_MARKER"
