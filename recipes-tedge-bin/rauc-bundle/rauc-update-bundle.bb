@@ -26,4 +26,3 @@ RAUC_SLOT_rootfs[hooks] = "post-install"
 
 RAUC_KEY_FILE ?= "${THISDIR}/files/development-1.key.pem"
 RAUC_CERT_FILE ?= "${THISDIR}/files/development-1.cert.pem"
-IMAGE_ROOTFS_ALIGNMENT = "4"
