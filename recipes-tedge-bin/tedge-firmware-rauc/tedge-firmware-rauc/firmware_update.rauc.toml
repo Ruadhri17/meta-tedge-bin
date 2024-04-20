@@ -43,7 +43,7 @@ on_error = { status = "rollback", reason = "Verification failed, need to rollbac
 
 [commit]
 script = "/usr/bin/rauc_workflow.sh ${.payload.status} --firmware-name ${.payload.name} --firmware-version ${.payload.version} --url ${.payload.remoteUrl} --expected-partition ${.payload.nextPartition}"
-on_exit.0 = { status = "successful" }
+on_exit.0 = { status = "pre_successful" }
 on_exit.2 = { status = "failed", reason = "Nothing to commit. Either the boot loader triggered the rollback, the device was rebooted after switching to new partition, or someone did a manual commit or rollback!"}
 on_exit._ = { status = "rollback", reason = "Rauc commit failed. Rolling back to previous partition" }
 
@@ -60,6 +60,11 @@ on_success = "rollback_successful"
 [rollback_successful]
 script = "/usr/bin/rauc_workflow.sh ${.payload.status}"
 on_success = {status = "failed", reason = "Update failed but rollback was successful"}
+
+# TODO: Remove this step, this is just used as a test to see if the firmware_update workflow can be updated within the image
+[pre_successful]
+action = "proceed"
+on_success = "successful"
 
 [successful]
 action = "cleanup"
