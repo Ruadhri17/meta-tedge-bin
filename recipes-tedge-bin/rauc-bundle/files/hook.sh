@@ -1,7 +1,6 @@
 #!/bin/sh
 
 progress() {
-    echo "$@"
     echo "$@" >&2
 }
 
