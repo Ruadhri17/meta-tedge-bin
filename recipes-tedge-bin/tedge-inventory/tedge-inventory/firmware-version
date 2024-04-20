@@ -28,9 +28,9 @@ read_from_mender() {
 
 read_from_yocto_build() {
     NAME=$(grep "IMAGE_BASENAME = " /etc/build | cut -d = -f2- | xargs)
-    VERSION=$(grep "DATETIME = " /etc/build | cut -d = -f2- | xargs)
-    # Alternative version (from the full image name instead of the DATETIME)
-    #VERSION=$(grep "IMAGE_NAME = " /etc/build | cut -d = -f2- | rev | cut -d_ -f1 | rev | xargs)
+    VERSION=$(grep "IMAGE_NAME = " /etc/build | cut -d = -f2- | rev | cut -d_ -f1 | rev | xargs)
+    # Alternative version (using DATETIME)
+    # VERSION=$(grep "DATETIME = " /etc/build | cut -d = -f2- | xargs)
 }
 
 if command -v mender >/dev/null 2>&1; then
