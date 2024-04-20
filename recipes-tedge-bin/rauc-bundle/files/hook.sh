@@ -62,7 +62,22 @@ transfer_files() {
 
         if ls /etc/tedge/* >/dev/null 2>&1; then
             progress "Copying /etc/tedge configuration"
+
+            # TODO: Check if using symlinks would be a better option rather than restoring the firmware_update workflow
+            # The firmware_update.toml in an image should be left as-is and not overwritten by the current copy (as this allows updating the workflow)
+            RESTORE_FIRMARE_WORKFLOW=0
+            if [ -f "${target}/etc/tedge/operations/firmware_update.toml" ]; then
+                progress "Backing up firmware_update.toml from new image"
+                cp "${target}/etc/tedge/operations/firmware_update.toml" /tmp/firmware_update.toml.orig
+                RESTORE_FIRMARE_WORKFLOW=1
+            fi
+
             cp -RfaH /etc/tedge/* "${target}/etc/tedge"
+
+            if [ "$RESTORE_FIRMARE_WORKFLOW" = 1 ]; then
+                progress "Restoring firmware_update.toml from new image"
+                cp /tmp/firmware_update.toml.orig "${target}/etc/tedge/operations/firmware_update.toml"
+            fi
         fi
 
         # data files
