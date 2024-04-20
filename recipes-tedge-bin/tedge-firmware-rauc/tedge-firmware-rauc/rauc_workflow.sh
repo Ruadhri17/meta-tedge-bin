@@ -25,8 +25,10 @@ log() {
     echo "$msg" >&2
 
     # publish to pub for better resolution
-    current_partition=$(get_current_partition)
-    tedge mqtt pub -q 2 te/device/main///e/firmware_update "{\"text\":\"Firmware Workflow: [$ACTION] $*\",\"state\":\"$ACTION\",\"partition\":\"$current_partition\"}"
+    current_partition=$(get_current_partition ||:)
+    if ! tedge mqtt pub -q 2 te/device/main///e/firmware_update "{\"text\":\"Firmware Workflow: [$ACTION] $*\",\"state\":\"$ACTION\",\"partition\":\"$current_partition\"}"; then
+        echo "$(date +%Y-%m-%dT%H:%M:%S) [current=$ACTION] WARNING: Failed to publish MQTT message" >&2
+    fi
     sleep 1
 }
 
@@ -254,7 +256,7 @@ verify() {
     # Remove once https://github.com/thin-edge/thin-edge.io/issues/2498 is resolved
     TOPIC_ROOT=$(tedge config get mqtt.topic_root)
     TOPIC_ID=$(tedge config get mqtt.device_topic_id)
-    tedge mqtt pub -q 1 "$TOPIC_ROOT/$TOPIC_ID/cmd/health/check" '{}'
+    tedge mqtt pub -q 1 "$TOPIC_ROOT/$TOPIC_ID/cmd/health/check" '{}' || local_log "Failed to publish health/check request message"
 
     exit "$OK"
 }
