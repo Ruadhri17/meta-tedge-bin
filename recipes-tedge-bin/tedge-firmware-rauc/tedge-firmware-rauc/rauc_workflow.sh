@@ -256,14 +256,6 @@ verify() {
     TOPIC_ID=$(tedge config get mqtt.device_topic_id)
     tedge mqtt pub -q 1 "$TOPIC_ROOT/$TOPIC_ID/cmd/health/check" '{}'
 
-    # FIXME: Trigger tedge-inventory scripts as the status updates
-    # are lost when the mosquitto bridge is down
-    # Don't fail if the service does not exist, as this is not critical!
-    # if command -V systemctl >/dev/null 2>&1; then
-    #     echo "Triggering tedge-inventory scripts" >&2
-    #     systemctl start tedge-inventory ||:
-    # fi
-
     exit "$OK"
 }
 
