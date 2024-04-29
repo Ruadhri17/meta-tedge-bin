@@ -85,7 +85,7 @@ ENABLE_UART = "1"
 # vfat boot partition. To be able to update the Linux kernel Mender
 # uses an image that resides on the root file system and below line
 # ensures that they are installed to /boot
-IMAGE_INSTALL:append = " kernel-image kernel-device tree"
+IMAGE_INSTALL:append = " kernel-image kernel-devicetree"
 
 # Mender will build an image called `sdimg` which shall be used instead
 # of the `rpi-sdimg`.
