@@ -1,6 +1,12 @@
-# meta-tedge-bin
+# Deprecation 
+**The `meta-tedge-bin` is now deprecated and was moved to [meta-tedge](https://github.com/thin-edge/meta-tedge) as a part of the multi-layer repository. All future updates will be carried out there.**
+
+
+## meta-tedge-bin
 
 `Meta-tedge-bin` is Openembedded layer of [thin-edge.io](https://github.com/thin-edge/thin-edge.io) that uses precompiled binaries.
+
+
 
 ## Dependencies
 
